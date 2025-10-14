@@ -252,6 +252,7 @@ export type ChallengeResponseAuthenticate = {
     isUserIdentified: boolean;
     challenge: string;
     rpId: string;
+    userVerification: string;
 };
 
 export type ChallengeResponseRegister = {

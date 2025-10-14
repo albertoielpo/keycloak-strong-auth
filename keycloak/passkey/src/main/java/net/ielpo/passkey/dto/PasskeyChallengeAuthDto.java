@@ -17,13 +17,18 @@ public class PasskeyChallengeAuthDto {
     @JsonProperty(value = "rpId")
     private final String rpId;
 
+    @JsonProperty(value = "userVerification")
+    private final String userVerification;
+
     @JsonCreator
     public PasskeyChallengeAuthDto(@JsonProperty(value = "isUserIdentified", required = true) Boolean isUserIdentified,
             @JsonProperty(value = "challenge", required = true) String challenge,
-            @JsonProperty(value = "rpId", required = true) String rpId) {
+            @JsonProperty(value = "rpId", required = true) String rpId,
+            @JsonProperty(value = "userVerification", required = true) String userVerification) {
         this.isUserIdentified = isUserIdentified;
         this.challenge = challenge;
         this.rpId = rpId;
+        this.userVerification = userVerification;
     }
 
     public Boolean getIsUserIdentified() {
@@ -36,6 +41,10 @@ public class PasskeyChallengeAuthDto {
 
     public String getRpId() {
         return rpId;
+    }
+
+    public String getUserVerification() {
+        return userVerification;
     }
 
 }
