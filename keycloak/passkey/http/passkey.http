@@ -1,0 +1,60 @@
+###
+# Sa-client login using keycloak
+# @name clientlogin
+POST http://localhost:8080/realms/sa/protocol/openid-connect/token
+Accept: application/json
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=sa-client&client_secret=UO7ZdPpxQPzvld7TyG9vUJEXBtMmpoHG
+
+### Bearer admin token
+@bearer = {{clientlogin.response.body.access_token}}
+
+### Get version
+GET  http://localhost:8080/realms/sa/passkey/version
+Accept: application/json
+Authorization: bearer {{bearer}}
+
+### Get challenge
+### type AUTHENTICATE|REGISTER
+GET  http://localhost:8080/realms/sa/passkey/challenge?username=alberto&type=AUTHENTICATE
+Accept: application/json
+Authorization: bearer {{bearer}}
+
+
+### Authenticate an existing user via webauthn
+POST  http://localhost:8080/realms/sa/passkey/authenticate
+Accept: application/json
+Content-Type: application/json
+Authorization: bearer {{bearer}}
+
+{
+    "clientDataJSON": "",
+    "authenticatorData": "",
+    "signature": "",
+    "credentialId": "",
+    "userHandle": "",
+    "username": "",
+    "challenge": "",
+    "clientProperties": {
+        "clientId": "sa-client",
+        "protocol": "openid-connect",
+        "redirectUri": "http://localhost",
+        "ipAddress": "123.54.21.11"
+    }
+}
+
+### Register the webauthn for an existing user
+POST  http://localhost:8080/realms/sa/passkey/register
+Accept: application/json
+Content-Type: application/json
+Authorization: bearer {{bearer}}
+
+{
+    "clientDataJSON": "",
+    "attestationObject": "",
+    "publicKeyCredentialId": "",
+    "transports": "",
+    "authenticatorLabel": "",
+    "username": "alberto"
+}

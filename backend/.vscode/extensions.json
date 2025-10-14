@@ -1,0 +1,24 @@
+{
+    // List of extensions which should be recommended for users of this workspace.
+    "recommendations": [
+        // prettier - format code
+        "esbenp.prettier-vscode",
+        // eslint - enforce code
+        "dbaeumer.vscode-eslint",
+        // rest client inside vscode
+        "humao.rest-client",
+        // plantuml diagram
+        "jebbs.plantuml",
+        "qhoekman.language-plantuml",
+        // visualize git graph
+        "mhutchie.git-graph",
+        // gitlab workflow for merge request
+        "GitLab.gitlab-workflow",
+        // inspect git code
+        "eamodio.gitlens",
+        // launch jest test in the ide
+        "firsttris.vscode-jest-runner"
+    ],
+    // List of extensions recommended by VSCode that should not be recommended for users of this workspace.
+    "unwantedRecommendations": []
+}

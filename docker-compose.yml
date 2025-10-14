@@ -1,0 +1,71 @@
+networks:
+    sa-net:
+        driver: "bridge"
+services:    
+    # admin console: http://localhost:8080/admin/master/console
+    # account url: 	http://localhost:8080/realms/sa/account/ (alberto/alberto)
+    keycloak:
+        image: quay.io/keycloak/keycloak:26.4
+        container_name: keycloak
+        hostname: keycloak
+        command: start-dev --import-realm
+        depends_on:
+            - postgres
+        environment:
+            # KC_BOOTSTRAP is not required because uses import-realm
+            # KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            # KC_BOOTSTRAP_ADMIN_PASSWORD: 64e391390d11624048c4d0be
+            KC_DB: postgres
+            KC_DB_USERNAME: postgres
+            KC_DB_PASSWORD: postgres
+            KC_DB_SCHEMA: keycloak
+            KC_DB_URL_HOST: postgres
+            KC_DB_URL_DATABASE: postgres
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./keycloak/data/:/opt/jboss/keycloak/standalone/data/
+            - ./keycloak/import/:/opt/keycloak/data/import/
+            - ./keycloak/plugin/keycloak-passkey.jar:/opt/keycloak/providers/keycloak-passkey.jar
+        networks:
+            - sa-net
+    ui:
+        image: node:24-alpine
+        working_dir: /app
+        volumes:
+            - ./ui:/app
+        ports:
+            - "80:8080"
+        command: npx http-server . -p 8080
+        restart: unless-stopped
+        networks:
+            - sa-net
+    postgres:
+        container_name: postgres
+        ports:
+        - "5432:5432"
+        environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_DB=postgres
+        - POSTGRES_PASSWORD=postgres 
+        image: "postgres:17"
+        networks:
+        - sa-net
+        restart: on-failure
+        volumes:
+        - ${DB_DATA:-/var/docker_volumes/strong-auth-postgres}:/var/lib/postgresql/data
+        - ./init-db:/docker-entrypoint-initdb.d
+    backend:
+        container_name: backend
+        ports:
+        - "3000:3000"
+        environment:
+            - APP_ENV=docker
+            - KEYCLOAK_REALM_CLIENT_ID=sa-client
+            - KEYCLOAK_REALM_CLIENT_SECRET=UO7ZdPpxQPzvld7TyG9vUJEXBtMmpoHG
+        build: ./backend
+        depends_on:
+            - keycloak
+        networks:
+            - sa-net
+        restart: on-failure

@@ -1,0 +1,36 @@
+### Authentication challenge
+GET http://localhost:3000/users/challenge?type=AUTHENTICATE&username=alberto
+Accept: application/json
+
+### Registration challenge
+GET http://localhost:3000/users/challenge?type=REGISTER&username=alberto
+Accept: application/json
+
+### Authenticate an existing user via webauthn
+POST  http://localhost:3000/users/authenticate
+Accept: application/json
+Content-Type: application/json
+
+{
+    "clientDataJSON": "",
+    "authenticatorData": "",
+    "signature": "",
+    "credentialId": "",
+    "userHandle": "",
+    "username": "alberto",
+    "challenge": ""
+}
+
+### Register the webauthn for an existing user
+POST  http://localhost:3000/users/register
+Accept: application/json
+Content-Type: application/json
+
+{
+    "clientDataJSON": "string",
+    "attestationObject": "string",
+    "publicKeyCredentialId": "string",
+    "transports": "string",
+    "authenticatorLabel": "string",
+    "username": "alberto"
+}

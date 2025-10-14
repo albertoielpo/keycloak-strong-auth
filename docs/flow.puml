@@ -1,0 +1,31 @@
+@startuml "flow"
+participant ui
+participant keystore
+participant backend
+participant keycloak
+
+== REGISTER FLOW ==
+ui -> backend: GET challenge
+backend -> keycloak: GET challenge
+keycloak --> backend: data
+backend --> ui: data
+ui -> keystore: credentials create\n(navigator.credentials.create)
+keystore --> ui: data
+ui -> backend: POST register
+backend -> keycloak: POST register
+keycloak --> backend: OK
+backend --> ui: OK
+
+== AUTH FLOW ==
+ui -> backend: GET challenge
+backend -> keycloak: GET challenge
+keycloak --> backend: data
+backend --> ui: data
+ui -> keystore: credentials sign\n(navigator.credentials.get)
+keystore --> ui: data
+ui -> backend: POST authenticate
+backend -> keycloak: POST authenticate
+keycloak --> backend: access + refresh token
+backend --> ui: access + refresh token
+
+@enduml
