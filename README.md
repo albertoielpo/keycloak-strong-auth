@@ -43,6 +43,9 @@ client_id: sa-client
 client_secret: UO7ZdPpxQPzvld7TyG9vUJEXBtMmpoHG
 ```
 
+### UI
+http://localhost with username <code>alberto</code>.
+
 ### Full backup
 ```bash
 docker compose run --name keycloak-export-temp keycloak export --dir /tmp/export --users same_file
