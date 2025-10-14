@@ -81,7 +81,7 @@ export default class KeycloakServiceProvider {
         }
 
         const data = await res.json();
-        this.logger.debug(data, "message");
+        // this.logger.debug(data, "message");
         return data;
     }
 
@@ -148,7 +148,21 @@ export default class KeycloakServiceProvider {
 
     async authenticate(dto: PasskeyAuthDto): Promise<unknown> {
         const token = await this.login();
-        this.logger.debug(dto, "message");
+        const payload = {
+            clientDataJSON: dto.clientDataJSON,
+            authenticatorData: dto.authenticatorData,
+            signature: dto.signature,
+            credentialId: dto.credentialId,
+            userHandle: dto.userHandle,
+            challenge: dto.challenge,
+            username: dto.username,
+            clientProperties: {
+                protocol: "openid-connect",
+                redirectUri: this.keycloakTokenRedirectUri,
+                ipAddress: this.keycloakTokenIpAddress
+            }
+        };
+        this.logger.debug(payload, "message");
         const res = await fetch(
             `${this.keycloakBase}/${this.keycloakPasskeyAuthenticate}`,
             {
@@ -158,21 +172,7 @@ export default class KeycloakServiceProvider {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token.access_token}`
                 },
-                body: JSON.stringify({
-                    clientDataJSON: dto.clientDataJSON,
-                    authenticatorData: dto.authenticatorData,
-                    signature: dto.signature,
-                    credentialId: dto.credentialId,
-                    userHandle: dto.userHandle,
-                    challenge: dto.challenge,
-                    username: dto.username,
-                    clientProperties: {
-                        clientId: this.keycloakRealmClientId,
-                        protocol: "openid-connect",
-                        redirectUri: this.keycloakTokenRedirectUri,
-                        ipAddress: this.keycloakTokenIpAddress
-                    }
-                })
+                body: JSON.stringify(payload)
             }
         );
         if (!res.ok) {
@@ -194,7 +194,15 @@ export default class KeycloakServiceProvider {
 
     async register(dto: PasskeyRegisterDto): Promise<unknown> {
         const token = await this.login();
-        this.logger.debug(dto, "message");
+        const payload = {
+            clientDataJSON: dto.clientDataJSON,
+            attestationObject: dto.attestationObject,
+            publicKeyCredentialId: dto.publicKeyCredentialId,
+            transports: dto.transports,
+            authenticatorLabel: dto.authenticatorLabel,
+            username: dto.username
+        };
+        this.logger.debug(payload, "message");
         const res = await fetch(
             `${this.keycloakBase}/${this.keycloakPasskeyRegister}`,
             {
@@ -204,14 +212,7 @@ export default class KeycloakServiceProvider {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token.access_token}`
                 },
-                body: JSON.stringify({
-                    clientDataJSON: dto.clientDataJSON,
-                    attestationObject: dto.attestationObject,
-                    publicKeyCredentialId: dto.publicKeyCredentialId,
-                    transports: dto.transports,
-                    authenticatorLabel: dto.authenticatorLabel,
-                    username: dto.username
-                })
+                body: JSON.stringify(payload)
             }
         );
         if (!res.ok) {

@@ -19,7 +19,7 @@ public class PasskeyAuthDto {
 
     /**
      * session client properties
-     * such as clientId, protocol, redirectUri, ipAddress
+     * such as protocol, redirectUri, ipAddress
      */
     private final Map<String, String> clientProperties;
 

@@ -64,12 +64,12 @@ public abstract class PasskeyAbstractProvider {
     }
 
     /**
-     * Assert client, token must be valid
+     * Verify the caller client, token must be valid
      * Call this function in every public provider method as first line
      * 
      * @return AuthResult
      */
-    protected AuthResult assertAuthentication() {
+    protected AuthResult verifyAuthClient() {
         AuthResult auth = new AppAuthManager.BearerTokenAuthenticator(this.session).authenticate();
         if (auth == null) {
             /**

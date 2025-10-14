@@ -37,7 +37,6 @@ Authorization: bearer {{bearer}}
     "username": "",
     "challenge": "",
     "clientProperties": {
-        "clientId": "sa-client",
         "protocol": "openid-connect",
         "redirectUri": "http://localhost",
         "ipAddress": "123.54.21.11"

@@ -19,6 +19,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.credential.WebAuthnCredentialModel;
+import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.services.resource.RealmResourceProvider;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Path("version")
     @Produces(MediaType.APPLICATION_JSON)
     public Response version() {
-        this.assertAuthentication(); // always first line
+        this.verifyAuthClient(); // always first line
         return Response.ok(new PasskeyVersionDto(PasskeyConsts.VERSION)).build();
     }
 
@@ -93,7 +94,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Path("challenge")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChallenge(@QueryParam("username") String username, @QueryParam("type") ChallegeType type) {
-        this.assertAuthentication(); // always first line
+        this.verifyAuthClient(); // always first line
         if (username == null || type == null) {
             return this.throwsForbidden(String.format("username %s or type %s are invalid", username, type));
         }
@@ -184,7 +185,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Consumes(MediaType.APPLICATION_JSON)
     public Response authenticate(final PasskeyAuthDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
-        this.assertAuthentication(); // always first line
+        AuthResult authResult = this.verifyAuthClient(); // always first line
         if (dto.getUsername() == null || dto == null) {
             return this.throwsForbidden("Invalid username or body");
         }
@@ -216,7 +217,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
             return this.throwsForbidden("Invalid passkey");
         }
 
-        ClientModel client = realm.getClientByClientId(dto.getClientProperties().get("clientId"));
+        ClientModel client = authResult.getClient();
         if (client == null) {
             return this.throwsForbidden("Client id not found");
         }
@@ -239,7 +240,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Produces(MediaType.APPLICATION_JSON)
     public Response register(PasskeyRegisterDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
-        this.assertAuthentication(); // always first line
+        this.verifyAuthClient(); // always first line
         final RealmModel realm = this.session.getContext().getRealm();
         final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
 
