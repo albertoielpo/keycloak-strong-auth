@@ -4,7 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.keycloak.credential.WebAuthnCredentialModelInput;
 import org.keycloak.models.AuthenticatedClientSessionModel;
@@ -14,6 +16,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.models.WebAuthnPolicy;
 import org.keycloak.models.credential.WebAuthnCredentialModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.representations.AccessToken;
@@ -212,7 +215,7 @@ public abstract class PasskeyAbstractProvider {
      * @throws UnsupportedEncodingException
      */
     protected boolean isPasskeyValid(byte[] credentialId, byte[] authenticatorData, String clientDataJSON,
-            byte[] signature, String challengeRequest, UserModel user, RealmModel realm)
+            byte[] signature, String challengeRequest, UserModel user, RealmModel realm, WebAuthnPolicy policy)
             throws JsonProcessingException, UnsupportedEncodingException {
         // Decode the Base64 string
         byte[] decodedBytes = PasskeyUtils.base64UrlDecoder(clientDataJSON);
@@ -228,12 +231,20 @@ public abstract class PasskeyAbstractProvider {
         JsonNode clientData = PasskeyConsts.objectMapper.readTree(decodedClientDataJSON);
 
         Origin origin = new Origin(clientData.get("origin").asText());
-        String rpId = clientData.get("origin").asText().replace("http://", "").replace("https://", "").split(":")[0];
-        Challenge challenge = new DefaultChallenge(storedChallenge);
-        ServerProperty serverProperty = new ServerProperty(origin, rpId, challenge);
+        Set<Origin> originSet = new HashSet<>();
+        originSet.add(origin);
 
-        boolean isUVFlagChecked = "required"
-                .equals(realm.getWebAuthnPolicyPasswordless().getUserVerificationRequirement());
+        String rpId = policy.getRpId(); // configured rpId
+
+        for (String extra : policy.getExtraOrigins()) {
+            originSet.add(new Origin(extra));
+        }
+
+        Challenge challenge = new DefaultChallenge(storedChallenge);
+
+        ServerProperty serverProperty = new ServerProperty(originSet, rpId, challenge);
+
+        boolean isUVFlagChecked = "required".equals(policy.getUserVerificationRequirement());
 
         var authReq = new AuthenticationRequest(credentialId, authenticatorData,
                 PasskeyUtils.base64UrlDecoder(clientDataJSON),

@@ -102,6 +102,9 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         // Get realm from session, avoing cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
+        if (!policy.isPasskeysEnabled()) {
+            return this.throwsForbidden("Passkeys policy not enabled");
+        }
 
         final UserModel user = this.session.users().getUserByUsername(realm, username);
 
@@ -201,6 +204,11 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                     String.format("User %s not found in the realm %s", dto.getUsername(), realm.getName()));
         }
 
+        WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
+        if (!policy.isPasskeysEnabled()) {
+            return this.throwsForbidden("Passkeys policy not enabled");
+        }
+
         WebAuthnCredentialModel webAuthnCredential = getWebAuthnCredential(user, dto.getCredentialId());
         if (webAuthnCredential == null) {
             return this.throwsForbidden("No passkey found for user");
@@ -213,7 +221,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         String challenge = dto.getChallenge();
 
         boolean isValid = this.isPasskeyValid(credentialId, authenticatorData, clientDataJSON, signature, challenge,
-                user, realm);
+                user, realm, policy);
 
         if (!isValid) {
             return this.throwsForbidden("Invalid passkey");
@@ -251,6 +259,11 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                     String.format("User %s not found in the realm %s", dto.getUsername(), realm.getName()));
         }
 
+        WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
+        if (!policy.isPasskeysEnabled()) {
+            return this.throwsForbidden("Passkeys policy not enabled");
+        }
+
         String base64ClientDataJSON = dto.getClientDataJSON();
 
         byte[] decodedBytes = PasskeyUtils.base64UrlDecoder(base64ClientDataJSON);
@@ -259,11 +272,17 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         JsonNode clientData = PasskeyConsts.objectMapper.readTree(decodedClientDataJSON);
 
         Origin origin = new Origin(clientData.get("origin").asText());
-        String rpId = clientData.get("origin").asText().replace("http://", "").replace("https://", "").split(":")[0];
+        Set<Origin> originSet = new HashSet<>();
+        originSet.add(origin);
+
+        String rpId = policy.getRpId(); // configured rpId
+
+        for (String extra : policy.getExtraOrigins()) {
+            originSet.add(new Origin(extra));
+        }
 
         Challenge challenge = new DefaultChallenge(clientData.get("challenge").asText());
 
-        Set<Origin> originSet = Set.of(origin);
         ServerProperty serverProperty = new ServerProperty(originSet, rpId, challenge);
 
         RegistrationParameters registrationParameters = new RegistrationParameters(serverProperty,

@@ -26,6 +26,11 @@ export class WebauthnAuthenticate {
     }
 
     async authenticateByWebAuthn(input) {
+        // Check if WebAuthn is supported by this browser
+        if (!window.PublicKeyCredential) {
+            this.returnFailure(input.errmsg);
+            return;
+        }
         if (!input.isUserIdentified) {
             try {
                 const result = await this.doAuthenticate([], input.challenge, input.userVerification, input.rpId, input.createTimeout, input.errmsg);
