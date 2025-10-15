@@ -27,4 +27,7 @@ public class PasskeyConsts {
             new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS384),
             new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS512),
             new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS1));
+
+    // Default openid token scopes
+    public static final String DEFAULT_OPENID_TOKEN_SCOPES = "openid profile email";
 }

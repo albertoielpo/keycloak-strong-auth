@@ -125,7 +125,9 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                             String.format("No passkey found for realm %s and username %s", realm.getName(), username));
                 }
 
-                return Response.ok(new PasskeyChallengeAuthDto(false, challengeBase64, policy.getRpId(), policy.getUserVerificationRequirement()))
+                return Response
+                        .ok(new PasskeyChallengeAuthDto(false, challengeBase64, policy.getRpId(),
+                                policy.getUserVerificationRequirement()))
                         .header("Content-Type", MediaType.APPLICATION_JSON).build();
             }
 

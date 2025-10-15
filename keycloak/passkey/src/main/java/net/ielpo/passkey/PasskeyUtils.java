@@ -2,6 +2,8 @@ package net.ielpo.passkey;
 
 import java.util.Base64;
 
+import org.keycloak.representations.AccessTokenResponse;
+
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
 
 /**
@@ -80,6 +82,36 @@ public class PasskeyUtils {
                 .replace('+', '-') // Replace + with -
                 .replace('/', '_') // Replace / with _
                 .replace("=", ""); // Remove padding
+    }
+
+    /**
+     * Access Token response builder
+     * 
+     * @param accessToken
+     * @param expiresIn
+     * @param refreshToken
+     * @param refreshExpiresIn
+     * @param tokenType
+     * @param idToken
+     * @param notBeforePolicy
+     * @param sessionState
+     * @param scope
+     * @return
+     */
+    public static AccessTokenResponse buildAccessTokenResponse(String accessToken, Long expiresIn, String refreshToken,
+            Long refreshExpiresIn, String tokenType, String idToken, int notBeforePolicy, String sessionState,
+            String scope) {
+        AccessTokenResponse response = new AccessTokenResponse();
+        response.setToken(accessToken);
+        response.setExpiresIn(expiresIn);
+        response.setRefreshToken(refreshToken);
+        response.setRefreshExpiresIn(refreshExpiresIn);
+        response.setTokenType(tokenType);
+        response.setIdToken(idToken);
+        response.setNotBeforePolicy(notBeforePolicy);
+        response.setSessionState(sessionState);
+        response.setScope(scope);
+        return response;
     }
 
 }

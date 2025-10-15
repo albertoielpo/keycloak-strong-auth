@@ -22,6 +22,7 @@ export default class KeycloakServiceProvider {
     private readonly keycloakRealmClientSecret: string;
     private readonly keycloakTokenRedirectUri: string;
     private readonly keycloakTokenIpAddress: string;
+    private readonly keycloakTokenIssuer: string;
 
     constructor(private readonly configService: ConfigService) {
         this.keycloakBase =
@@ -55,6 +56,10 @@ export default class KeycloakServiceProvider {
 
         this.keycloakTokenIpAddress = this.configService.getOrThrow<string>(
             "KEYCLOAK_TOKEN_IP_ADDRESS"
+        );
+
+        this.keycloakTokenIssuer = this.configService.getOrThrow<string>(
+            "KEYCLOAK_TOKEN_ISSUER"
         );
     }
 
@@ -159,7 +164,8 @@ export default class KeycloakServiceProvider {
             clientProperties: {
                 protocol: "openid-connect",
                 redirectUri: this.keycloakTokenRedirectUri,
-                ipAddress: this.keycloakTokenIpAddress
+                ipAddress: this.keycloakTokenIpAddress,
+                issuer: this.keycloakTokenIssuer
             }
         };
         this.logger.debug(payload, "message");

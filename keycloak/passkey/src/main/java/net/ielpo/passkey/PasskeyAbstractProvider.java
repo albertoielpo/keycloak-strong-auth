@@ -1,6 +1,7 @@
 package net.ielpo.passkey;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -16,7 +17,9 @@ import org.keycloak.models.UserSessionModel;
 import org.keycloak.models.credential.WebAuthnCredentialModel;
 import org.keycloak.protocol.oidc.TokenManager;
 import org.keycloak.representations.AccessToken;
+import org.keycloak.representations.IDToken;
 import org.keycloak.representations.RefreshToken;
+import org.keycloak.services.Urls;
 import org.keycloak.services.managers.AppAuthManager;
 import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.services.util.DefaultClientSessionContext;
@@ -46,7 +49,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import net.ielpo.passkey.dto.PasskeyTokenDto;
 
 /**
  * @author Alberto Ielpo
@@ -100,8 +102,8 @@ public abstract class PasskeyAbstractProvider {
 
             AuthenticatedClientSessionModel clientSession = session.sessions().createClientSession(realm, client,
                     userSession);
-            clientSession.setProtocol(clientProperties.get("protocol")); // openid-connect
-            clientSession.setRedirectUri(clientProperties.get("redirectUri")); // http://localhost
+            clientSession.setProtocol(clientProperties.get("protocol")); // ex: openid-connect
+            clientSession.setRedirectUri(clientProperties.get("redirectUri")); // ex: http://localhost
 
             ClientSessionContext ctx = DefaultClientSessionContext.fromClientSessionScopeParameter(clientSession,
                     session);
@@ -115,27 +117,58 @@ public abstract class PasskeyAbstractProvider {
                     .generateRefreshToken()
                     .generateIDToken();
 
-            // Build and return the access token
+            // Get the issuer from client properties
+            String issuer = clientProperties.get("issuer");
+            if (issuer == null || issuer.isEmpty()) {
+                // If undefined then create dynamically using Keycloak's built-in method
+                URI baseUri = session.getContext().getUri().getBaseUri();
+                issuer = Urls.realmIssuer(baseUri, realm.getName()); // ex: "http://keycloak:8080/realms/sa",
+            }
+
+            // Set issuer on access token
             AccessToken at = builder.getAccessToken();
+            at.issuer(issuer);
             String accessToken = session.tokens().encode(at);
 
+            // Get and encode refresh token
             RefreshToken rt = builder.getRefreshToken();
-            String refreshToken = session.tokens().encode(rt);
+            String refreshToken = rt != null ? session.tokens().encode(rt) : null;
 
-            // TODO: add if needed
-            // access_token: "string";
-            // expires_in: number;
-            // refresh_expires_in: number;
-            // refresh_token: string;
-            // token_type: string;
-            // "not-before-policy": number;
-            // session_state: string;
-            // scope: string;
+            // Get and encode ID token
+            IDToken idTokenObj = builder.getIdToken();
+            String idToken = null;
+            if (idTokenObj != null) {
+                idTokenObj.issuer(issuer); // Set issuer on ID token too
+                idToken = session.tokens().encode(idTokenObj);
+            }
+
+            // Calculate expiration times (in seconds)
+            Long expiresIn = (long) realm.getAccessTokenLifespan();
+            Long refreshExpiresIn = rt != null ? (long) realm.getSsoSessionIdleTimeout() : null;
+
+            // Token type is always Bearer for OAuth2
+            String tokenType = "Bearer";
+
+            // Get not-before policy from realm
+            int notBeforePolicy = realm.getNotBefore();
+
+            // Get session state from user session
+            String sessionState = userSession != null ? userSession.getId() : "";
+
+            // Build scope string
+            StringBuilder scopeBuilder = new StringBuilder();
+            if (at.getScope() != null && !at.getScope().isEmpty()) {
+                scopeBuilder.append(at.getScope());
+            } else {
+                // Default scopes
+                scopeBuilder.append(PasskeyConsts.DEFAULT_OPENID_TOKEN_SCOPES);
+            }
+            String scope = scopeBuilder.toString();
 
             return Response
-                    .ok(new PasskeyTokenDto(accessToken, refreshToken))
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                    .build();
+                    .ok(PasskeyUtils.buildAccessTokenResponse(accessToken, expiresIn, refreshToken, refreshExpiresIn,
+                            tokenType, idToken, notBeforePolicy, sessionState, scope))
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON).build();
 
         } catch (Exception e) {
             logger.error("Token generation failed: " + e.getMessage(), e);
