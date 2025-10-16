@@ -99,7 +99,7 @@ export class WebauthnAuthenticate {
     }
 
     returnSuccess(result, challenge, username) {
-        console.log("WebauthnAuthenticate result: ", result);
+        console.log("WebauthnAuthenticate return success");
         const payload = {
             clientDataJSON: base64url.stringify(new Uint8Array(result.response.clientDataJSON), { pad: false }),
             authenticatorData: base64url.stringify(new Uint8Array(result.response.authenticatorData), { pad: false }),
@@ -123,7 +123,6 @@ export class WebauthnAuthenticate {
         }).then(res => {
             if(!res.ok) throw new Error("Authentication failed");
             res.json().then((data) => {
-                console.log(data);
                 document.getElementById("debug").innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 90%;">${JSON.stringify(data, null, 2)}</pre>`;
             }).catch(err => {
                 console.log(err);

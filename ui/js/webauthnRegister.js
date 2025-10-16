@@ -123,7 +123,7 @@ export class WebauthnRegister {
     }
 
     returnSuccess(result, initLabel, initLabelPrompt, initUsername) {
-        console.log("WebauthnRegister success: ", result, initLabel, initLabelPrompt, initUsername);
+        console.log("WebauthnRegister return success");
 
         const payload = {
             clientDataJSON: base64url.stringify(new Uint8Array(result.response.clientDataJSON), { pad: false }),
@@ -157,7 +157,6 @@ export class WebauthnRegister {
         }).then(res => {
             if(!res.ok) throw new Error("Register failed");
             res.json().then((data) => {
-                console.log(data);
                 document.getElementById("debug").innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word; max-width: 90%;">${JSON.stringify(data, null, 2)}</pre>`;
             }).catch(err => {
                 console.log(err);
