@@ -5,8 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Alberto Ielpo
+ *         Challenge response payload for authentication flow
+ * @see net.ielpo.passkey.dto.ChallengeType#AUTHENTICATE
  */
-public class PasskeyChallengeAuthDto {
+public class ChallengeAuthResDto {
 
     @JsonProperty(value = "isUserIdentified")
     private final Boolean isUserIdentified;
@@ -21,7 +23,7 @@ public class PasskeyChallengeAuthDto {
     private final String userVerification;
 
     @JsonCreator
-    public PasskeyChallengeAuthDto(@JsonProperty(value = "isUserIdentified", required = true) Boolean isUserIdentified,
+    public ChallengeAuthResDto(@JsonProperty(value = "isUserIdentified", required = true) Boolean isUserIdentified,
             @JsonProperty(value = "challenge", required = true) String challenge,
             @JsonProperty(value = "rpId", required = true) String rpId,
             @JsonProperty(value = "userVerification", required = true) String userVerification) {

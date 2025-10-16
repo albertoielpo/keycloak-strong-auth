@@ -5,8 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Alberto Ielpo
+ *         Register request payload
  */
-public class PasskeyRegisterDto {
+public class RegisterReqDto {
     private final String clientDataJSON;
     private final String attestationObject;
     private final String publicKeyCredentialId;
@@ -15,7 +16,7 @@ public class PasskeyRegisterDto {
     private final String username;
 
     @JsonCreator
-    public PasskeyRegisterDto(@JsonProperty(value = "clientDataJSON", required = true) String clientDataJSON,
+    public RegisterReqDto(@JsonProperty(value = "clientDataJSON", required = true) String clientDataJSON,
             @JsonProperty(value = "attestationObject", required = true) String attestationObject,
             @JsonProperty(value = "publicKeyCredentialId", required = true) String publicKeyCredentialId,
             @JsonProperty(value = "transports", required = false) String transports,

@@ -7,8 +7,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Alberto Ielpo
+ *         Challenge response payload for registration flow
+ * @see net.ielpo.passkey.dto.ChallengeType#REGISTER
  */
-public class PasskeyChallengeRegisterDto {
+public class ChallengeRegisterResDto {
 
     @JsonProperty(value = "challenge")
     private final String challenge;
@@ -44,7 +46,7 @@ public class PasskeyChallengeRegisterDto {
     private final String excludeCredentialIds;
 
     @JsonCreator
-    public PasskeyChallengeRegisterDto(
+    public ChallengeRegisterResDto(
             @JsonProperty(value = "challenge", required = true) String challenge,
             @JsonProperty(value = "userid", required = true) String userid,
             @JsonProperty(value = "username", required = true) String username,

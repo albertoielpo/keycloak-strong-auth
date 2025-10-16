@@ -7,8 +7,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Alberto Ielpo
+ *         Authenticate request payload
  */
-public class PasskeyAuthDto {
+public class AuthReqDto {
     private final String clientDataJSON;
     private final String authenticatorData;
     private final String signature;
@@ -24,7 +25,7 @@ public class PasskeyAuthDto {
     private final Map<String, String> clientProperties;
 
     @JsonCreator
-    public PasskeyAuthDto(@JsonProperty(value = "clientDataJSON", required = true) String clientDataJSON,
+    public AuthReqDto(@JsonProperty(value = "clientDataJSON", required = true) String clientDataJSON,
             @JsonProperty(value = "authenticatorData", required = true) String authenticatorData,
             @JsonProperty(value = "signature", required = true) String signature,
             @JsonProperty(value = "credentialId", required = true) String credentialId,

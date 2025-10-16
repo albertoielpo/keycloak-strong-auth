@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.keycloak.credential.CredentialModel;
@@ -43,12 +42,13 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import net.ielpo.passkey.dto.AuthReqDto;
 import net.ielpo.passkey.dto.ChallegeType;
-import net.ielpo.passkey.dto.PasskeyAuthDto;
-import net.ielpo.passkey.dto.PasskeyChallengeAuthDto;
-import net.ielpo.passkey.dto.PasskeyChallengeRegisterDto;
-import net.ielpo.passkey.dto.PasskeyRegisterDto;
-import net.ielpo.passkey.dto.PasskeyVersionDto;
+import net.ielpo.passkey.dto.ChallengeAuthResDto;
+import net.ielpo.passkey.dto.ChallengeRegisterResDto;
+import net.ielpo.passkey.dto.RegisterReqDto;
+import net.ielpo.passkey.dto.RegisterResDto;
+import net.ielpo.passkey.dto.VersionResDto;
 
 /**
  * @author Alberto Ielpo
@@ -80,7 +80,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Produces(MediaType.APPLICATION_JSON)
     public Response version() {
         this.verifyAuthClient(); // always first line
-        return Response.ok(new PasskeyVersionDto(PasskeyConsts.VERSION)).build();
+        return Response.ok(new VersionResDto(PasskeyConsts.VERSION)).build();
     }
 
     /**
@@ -129,7 +129,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                 }
 
                 return Response
-                        .ok(new PasskeyChallengeAuthDto(false, challengeBase64, policy.getRpId(),
+                        .ok(new ChallengeAuthResDto(false, challengeBase64, policy.getRpId(),
                                 policy.getUserVerificationRequirement()))
                         .header("Content-Type", MediaType.APPLICATION_JSON).build();
             }
@@ -155,7 +155,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                     signatureAlgorithms.add(PasskeyUtils.algorithmNameToCOSE(alg));
                 }
 
-                PasskeyChallengeRegisterDto dto = new PasskeyChallengeRegisterDto(
+                ChallengeRegisterResDto dto = new ChallengeRegisterResDto(
                         challengeBase64, userIdBase64,
                         username, signatureAlgorithms,
                         policy.getRpEntityName(),
@@ -188,7 +188,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Path("authenticate")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response authenticate(final PasskeyAuthDto dto)
+    public Response authenticate(final AuthReqDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
         AuthResult authResult = this.verifyAuthClient(); // always first line
         if (dto.getUsername() == null || dto == null) {
@@ -248,7 +248,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Path("register")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response register(PasskeyRegisterDto dto)
+    public Response register(RegisterReqDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
         this.verifyAuthClient(); // always first line
         final RealmModel realm = this.session.getContext().getRealm();
@@ -336,7 +336,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         user.credentialManager().createStoredCredential(webAuthnCredentialModel);
 
         return Response.status(Response.Status.CREATED)
-                .entity(Map.of("message", "Passkey stored successfully"))
+                .entity(new RegisterResDto("Passkey stored successfully"))
                 .build();
     }
 

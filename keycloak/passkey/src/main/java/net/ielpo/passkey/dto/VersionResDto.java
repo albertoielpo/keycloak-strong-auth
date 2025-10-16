@@ -5,14 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author Alberto Ielpo
+ *         Version response payload
  */
-public class PasskeyVersionDto {
+public class VersionResDto {
 
     @JsonProperty(value = "version")
     private final String version;
 
     @JsonCreator
-    public PasskeyVersionDto(@JsonProperty(value = "version", required = true) String version) {
+    public VersionResDto(@JsonProperty(value = "version", required = true) String version) {
         this.version = version;
     }
 
