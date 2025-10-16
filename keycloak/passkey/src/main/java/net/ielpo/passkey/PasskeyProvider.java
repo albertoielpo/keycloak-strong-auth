@@ -99,10 +99,10 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
             return this.throwsForbidden(String.format("username %s or type %s are invalid", username, type));
         }
 
-        // Get realm from session, avoing cross realm logic
+        // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
-        if (!policy.isPasskeysEnabled()) {
+        if (policy == null || !policy.isPasskeysEnabled()) {
             return this.throwsForbidden("Passkeys policy not enabled");
         }
 
@@ -113,21 +113,24 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         }
 
         // Generate a new challenge
-        String challengeBase64 = generateChallenge();
+        String challengeBase64 = this.generateChallenge();
+        // Store challenge in user attributes
+        user.setSingleAttribute("webauthn-challenge", challengeBase64);
 
+        // Get the configured webauth passwordless credentials for the user
         List<CredentialModel> webAuthnCredentials = user.credentialManager()
                 .getStoredCredentialsStream()
                 .filter(cred -> WebAuthnCredentialModel.TYPE_PASSWORDLESS.equals(cred.getType()))
                 .toList();
-        // Store challenge in user attributes
-        user.setSingleAttribute("webauthn-challenge", challengeBase64);
+
         switch (type) {
             case AUTHENTICATE: {
                 if (webAuthnCredentials.isEmpty()) {
+                    // If the user has no passkey configured then thrown error
                     return this.throwsForbidden(
                             String.format("No passkey found for realm %s and username %s", realm.getName(), username));
                 }
-
+                // return a valid challenge auth response
                 return Response
                         .ok(new ChallengeAuthResDto(false, challengeBase64, policy.getRpId(),
                                 policy.getUserVerificationRequirement()))
@@ -137,7 +140,8 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
             case REGISTER: {
                 String userIdBase64 = PasskeyUtils.base64UrlEncoder(user.getId().getBytes());
 
-                // Convert the first stored credential to WebAuthnCredentialModel
+                // Loop through the user configured webauth credentials and add to the exclude
+                // credentials ids to avoid duplicates
                 StringBuilder excludeCredentialIds = new StringBuilder("");
                 for (var wac : webAuthnCredentials) {
                     WebAuthnCredentialModel credentialModel = WebAuthnCredentialModel.createFromCredentialModel(wac);
@@ -150,11 +154,13 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                     excludeCredentialIds.append(",");
                 }
 
+                // Populate the signature algorithm and convert it to COSE
                 List<Long> signatureAlgorithms = new ArrayList<>();
                 for (String alg : policy.getSignatureAlgorithm()) {
                     signatureAlgorithms.add(PasskeyUtils.algorithmNameToCOSE(alg));
                 }
 
+                // return a valid challenge registration response
                 ChallengeRegisterResDto dto = new ChallengeRegisterResDto(
                         challengeBase64, userIdBase64,
                         username, signatureAlgorithms,
@@ -195,7 +201,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
             return this.throwsForbidden("Invalid username or body");
         }
 
-        // Get realm from session, avoing cross realm logic
+        // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
         final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
 
@@ -205,13 +211,13 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         }
 
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
-        if (!policy.isPasskeysEnabled()) {
+        if (policy == null || !policy.isPasskeysEnabled()) {
             return this.throwsForbidden("Passkeys policy not enabled");
         }
 
-        WebAuthnCredentialModel webAuthnCredential = getWebAuthnCredential(user, dto.getCredentialId());
+        WebAuthnCredentialModel webAuthnCredential = this.getWebAuthnCredential(user, dto.getCredentialId());
         if (webAuthnCredential == null) {
-            return this.throwsForbidden("No passkey found for user");
+            return this.throwsForbidden(String.format("No passkey found for user %s", dto.getUsername()));
         }
 
         byte[] credentialId = PasskeyUtils.base64UrlDecoder(dto.getCredentialId());
@@ -224,7 +230,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
                 user, realm, policy);
 
         if (!isValid) {
-            return this.throwsForbidden("Invalid passkey");
+            return this.throwsForbidden(String.format("Invalid passkey for user %s", dto.getUsername()));
         }
 
         ClientModel client = authResult.getClient();
@@ -251,6 +257,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     public Response register(RegisterReqDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
         this.verifyAuthClient(); // always first line
+        // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
         final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
 
@@ -260,7 +267,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         }
 
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
-        if (!policy.isPasskeysEnabled()) {
+        if (policy == null || !policy.isPasskeysEnabled()) {
             return this.throwsForbidden("Passkeys policy not enabled");
         }
 

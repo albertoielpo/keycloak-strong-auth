@@ -39,6 +39,7 @@ import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.verifier.attestation.statement.androidkey.AndroidKeyAttestationStatementVerifier;
 import com.webauthn4j.verifier.attestation.statement.androidsafetynet.AndroidSafetyNetAttestationStatementVerifier;
+import com.webauthn4j.verifier.attestation.statement.apple.AppleAnonymousAttestationStatementVerifier;
 import com.webauthn4j.verifier.attestation.statement.none.NoneAttestationStatementVerifier;
 import com.webauthn4j.verifier.attestation.statement.packed.PackedAttestationStatementVerifier;
 import com.webauthn4j.verifier.attestation.statement.tpm.TPMAttestationStatementVerifier;
@@ -191,7 +192,7 @@ public abstract class PasskeyAbstractProvider {
                 .getStoredCredentialsByTypeStream(WebAuthnCredentialModel.TYPE_PASSWORDLESS)
                 .map(WebAuthnCredentialModel::createFromCredentialModel)
                 .filter(credential -> {
-                    // in some version of kc is not stored as rfc4648
+                    // Credential ID is stored as base64 but FE requires rfc4648
                     String storedCredentialId = PasskeyUtils.base64ToBase64Url(
                             credential.getWebAuthnCredentialData().getCredentialId());
                     return credentialId.equals(storedCredentialId);
@@ -277,12 +278,13 @@ public abstract class PasskeyAbstractProvider {
     protected WebAuthnRegistrationManager createWebAuthnRegistrationManager() {
         return new WebAuthnRegistrationManager(
                 Arrays.asList(
-                        new NoneAttestationStatementVerifier(),
-                        new PackedAttestationStatementVerifier(),
-                        new TPMAttestationStatementVerifier(),
-                        new AndroidKeyAttestationStatementVerifier(),
-                        new AndroidSafetyNetAttestationStatementVerifier(),
-                        new FIDOU2FAttestationStatementVerifier()),
+                        new NoneAttestationStatementVerifier(), // Most common - no attestation
+                        new PackedAttestationStatementVerifier(), // Generic format
+                        new TPMAttestationStatementVerifier(), // Windows Hello
+                        new AndroidKeyAttestationStatementVerifier(), // Android devices
+                        new AndroidSafetyNetAttestationStatementVerifier(), // Old android devices
+                        new AppleAnonymousAttestationStatementVerifier(), // Apple devices
+                        new FIDOU2FAttestationStatementVerifier()), // Legacy FIDO U2F keys
                 this.verifier,
                 new DefaultSelfAttestationTrustworthinessVerifier(),
                 Collections.emptyList(),
