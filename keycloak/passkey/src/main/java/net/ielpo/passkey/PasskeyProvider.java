@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.keycloak.credential.CredentialModel;
 import org.keycloak.credential.CredentialProvider;
@@ -95,7 +96,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     @Produces(MediaType.APPLICATION_JSON)
     public Response getChallenge(@QueryParam("username") String username, @QueryParam("type") ChallegeType type) {
         this.verifyAuthClient(); // always first line
-        if (username == null || type == null) {
+        if (username == null || username.isEmpty() || type == null) {
             return this.throwsForbidden(String.format("username %s or type %s are invalid", username, type));
         }
 
@@ -197,7 +198,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     public Response authenticate(final AuthReqDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
         AuthResult authResult = this.verifyAuthClient(); // always first line
-        if (dto.getUsername() == null || dto == null) {
+        if (dto.getUsername().isEmpty()) {
             return this.throwsForbidden("Invalid username or body");
         }
 
@@ -257,6 +258,9 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
     public Response register(RegisterReqDto dto)
             throws JsonProcessingException, UnsupportedEncodingException {
         this.verifyAuthClient(); // always first line
+        if (dto.getUsername().isEmpty()) {
+            return this.throwsForbidden("Invalid username or body");
+        }
         // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
         final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
@@ -337,8 +341,12 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         WebAuthnCredentialModel webAuthnCredentialModel = WebAuthnCredentialModel
                 .createFromCredentialModel(credentialModel);
 
-        // Add the authenticator label
-        webAuthnCredentialModel.setUserLabel(dto.getAuthenticatorLabel());
+        // Add the authenticator label. If invalid then generate a random
+        String userLabel = dto.getAuthenticatorLabel();
+        if (userLabel == null || userLabel.isEmpty()) {
+            userLabel = UUID.randomUUID().toString();
+        }                
+        webAuthnCredentialModel.setUserLabel(userLabel);
 
         user.credentialManager().createStoredCredential(webAuthnCredentialModel);
 

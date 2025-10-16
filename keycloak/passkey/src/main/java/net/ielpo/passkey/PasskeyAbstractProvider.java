@@ -100,14 +100,27 @@ public abstract class PasskeyAbstractProvider {
             // Set client in session context before token generation
             session.getContext().setClient(client);
 
+            String ipAddress = clientProperties.get("ipAddress");
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                ipAddress = "127.0.0.1";
+            }
+            String protocol = clientProperties.get("protocol");
+            if (protocol == null || protocol.isEmpty()) {
+                protocol = "openid-connect";
+            }
+            String redirectUri = clientProperties.get("redirectUri");
+            if (redirectUri == null || redirectUri.isEmpty()) {
+                redirectUri = "http://localhost";
+            }
+
             UserSessionModel userSession = session.sessions().createUserSession(null, realm, user, user.getUsername(),
-                    clientProperties.get("ipAddress"), "passkey", false, null,
+                    ipAddress, "passkey", false, null,
                     null, UserSessionModel.SessionPersistenceState.PERSISTENT);
 
             AuthenticatedClientSessionModel clientSession = session.sessions().createClientSession(realm, client,
                     userSession);
-            clientSession.setProtocol(clientProperties.get("protocol")); // ex: openid-connect
-            clientSession.setRedirectUri(clientProperties.get("redirectUri")); // ex: http://localhost
+            clientSession.setProtocol(protocol); // ex: openid-connect
+            clientSession.setRedirectUri(redirectUri); // ex: http://localhost
 
             ClientSessionContext ctx = DefaultClientSessionContext.fromClientSessionScopeParameter(clientSession,
                     session);
