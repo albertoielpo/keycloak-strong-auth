@@ -12,7 +12,7 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
  * @author Alberto Ielpo
  */
 public class PasskeyConsts {
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.1.0";
     public static final ObjectMapper objectMapper = new ObjectMapper();
 
     // Provider id aka base route
@@ -30,4 +30,8 @@ public class PasskeyConsts {
 
     // Default openid token scopes
     public static final String DEFAULT_OPENID_TOKEN_SCOPES = "openid profile email";
+
+    // Env variable name defining the client id allowed. (comma separated)
+    // client-1,client-2
+    public static final String PASSKEY_ALLOWED_CLIENTS = "PASSKEY_ALLOWED_CLIENTS";
 }

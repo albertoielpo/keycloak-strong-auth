@@ -59,6 +59,9 @@ import jakarta.ws.rs.core.Response;
  */
 public abstract class PasskeyAbstractProvider {
 
+    private static final String BEARER_AUTH_SCHEME = "Bearer";
+    private static final String CLIENT_FORBIDDEN_MESSAGE = "Client is not authorized to access this resource";
+
     protected final Logger logger;
     protected final KeycloakSession session;
     protected final CertPathTrustworthinessVerifier verifier;
@@ -70,21 +73,65 @@ public abstract class PasskeyAbstractProvider {
     }
 
     /**
-     * Verify the caller client, token must be valid
-     * Call this function in every public provider method as first line
-     * 
-     * @return AuthResult
+     * Verify the caller client, token must be valid.
+     * Call this function in every public provider method as first line.
+     *
+     * Validates:
+     * 1. Bearer token authentication
+     * 2. Client authorization against PASSKEY_ALLOWED_CLIENTS environment variable
+     *
+     * @return AuthResult containing the authenticated session
+     * @throws NotAuthorizedException if token is invalid or missing
+     * @throws ForbiddenException     if client is not in the allowed list
      */
     protected AuthResult verifyAuthClient() {
+        AuthResult auth = this.authenticateBearerToken();
+        this.assertClientAuthorization(auth);
+        return auth;
+    }
+
+    /**
+     * Authenticate the bearer token from the request.
+     *
+     * @return AuthResult containing the authenticated session
+     * @throws NotAuthorizedException if token is invalid or missing
+     */
+    private AuthResult authenticateBearerToken() {
         AuthResult auth = new AppAuthManager.BearerTokenAuthenticator(this.session).authenticate();
         if (auth == null) {
-            /**
-             * This means that if an API is called with an invalid token
-             * an error needs to be thrown
-             */
-            throw new NotAuthorizedException("Bearer");
+            throw new NotAuthorizedException(BEARER_AUTH_SCHEME);
         }
         return auth;
+    }
+
+    /**
+     * Validate that the authenticated client is authorized to access the API.
+     * If PASSKEY_ALLOWED_CLIENTS environment variable is not set, all clients are
+     * allowed.
+     *
+     * @param auth the authenticated session
+     * @throws ForbiddenException if client is not in the allowed list
+     */
+    private void assertClientAuthorization(AuthResult auth) {
+        String pac = System.getenv(PasskeyConsts.PASSKEY_ALLOWED_CLIENTS);
+        if (pac == null || pac.isEmpty()) {
+            return; // No restrictions configured - all clients allowed
+        }
+        String[] allowedClients = pac.split(",");
+        String clientId = auth.getToken().getIssuedFor();
+        if (clientId == null) {
+            logger.warn("Client id is null");
+            throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
+        }
+
+        for (String allowed : allowedClients) {
+            if (allowed.trim().equals(clientId)) {
+                return; // found
+            }
+        }
+
+        logger.warn("Client '{}' attempted access but is not in allowed list", clientId);
+        throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
     }
 
     /**
