@@ -57,3 +57,11 @@ Authorization: bearer {{bearer}}
     "authenticatorLabel": "",
     "username": "alberto"
 }
+
+### Delete a specific credential by storageId
+DELETE  http://localhost:8080/realms/sa/passkey/credentials/storage-id?username=alberto
+Authorization: bearer {{bearer}}
+
+### Delete all credentials for a user
+DELETE  http://localhost:8080/realms/sa/passkey/credentials?username=alberto
+Authorization: bearer {{bearer}}

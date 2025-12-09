@@ -5,8 +5,10 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.keycloak.credential.WebAuthnCredentialModelInput;
 import org.keycloak.models.AuthenticatedClientSessionModel;
@@ -361,6 +363,53 @@ public abstract class PasskeyAbstractProvider {
     protected Response throwsForbidden(String errMsg) throws ForbiddenException {
         logger.error(errMsg);
         throw new ForbiddenException(errMsg);
+    }
+
+    /**
+     * Retrieve all passwordless WebAuthn credentials for a user
+     *
+     * @param user the user model
+     * @return list of WebAuthn credential models configured for the user
+     */
+    private List<WebAuthnCredentialModel> getWebAuthnCredentials(UserModel user) {
+        return user.credentialManager()
+                .getStoredCredentialsByTypeStream(WebAuthnCredentialModel.TYPE_PASSWORDLESS)
+                .map(WebAuthnCredentialModel::createFromCredentialModel)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Delete a specific WebAuthn credential by its storage ID
+     * 
+     * @param user      the user model who owns the credential
+     * @param storageId the Keycloak internal storage ID
+     * @return true if the credential was successfully deleted
+     */
+    protected boolean deleteWebAuthnCredential(UserModel user, String storageId) {
+        // Verify that the storageId belongs to this user before deletion
+        WebAuthnCredentialModel credential = this.getWebAuthnCredentials(user).stream()
+                .filter(x -> x.getId().equals(storageId)).findFirst().orElse(null);
+
+        if (credential == null) {
+            logger.warn("Credential storageId {} not found for user {}", storageId,
+                    user.getUsername());
+            return false;
+        }
+
+        // Remove the credential using its stored ID
+        return user.credentialManager().removeStoredCredentialById(credential.getId());
+    }
+
+    /**
+     * Delete all WebAuthn passwordless credentials for a user
+     * 
+     * @param user the user model whose credentials will be deleted
+     */
+    protected void deleteWebAuthnCredentials(UserModel user) {
+        List<WebAuthnCredentialModel> credentials = this.getWebAuthnCredentials(user);
+        for (WebAuthnCredentialModel credential : credentials) {
+            user.credentialManager().removeStoredCredentialById(credential.getId());
+        }
     }
 
 }

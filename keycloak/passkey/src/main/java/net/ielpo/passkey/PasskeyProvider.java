@@ -36,9 +36,11 @@ import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.verifier.attestation.trustworthiness.certpath.NullCertPathTrustworthinessVerifier;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -345,14 +347,75 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         String userLabel = dto.getAuthenticatorLabel();
         if (userLabel == null || userLabel.isEmpty()) {
             userLabel = UUID.randomUUID().toString();
-        }                
+        }
         webAuthnCredentialModel.setUserLabel(userLabel);
 
-        user.credentialManager().createStoredCredential(webAuthnCredentialModel);
+        CredentialModel res = user.credentialManager().createStoredCredential(webAuthnCredentialModel);
 
         return Response.status(Response.Status.CREATED)
-                .entity(new RegisterResDto("Passkey stored successfully"))
+                .entity(new RegisterResDto("Passkey stored successfully", res.getId()))
                 .build();
+    }
+
+    /**
+     * Delete a specific WebAuthn credential by storage ID
+     *
+     * @param username  the username of the credential owner
+     * @param storageId the Keycloak internal storage ID
+     * @return 204 No Content if successful else 403 Forbidden
+     */
+    @DELETE
+    @Path("credentials/{storageId}")
+    public Response deleteCredential(@QueryParam("username") String username,
+            @PathParam("storageId") String storageId) {
+        this.verifyAuthClient(); // always first line
+
+        if (username == null || username.isEmpty()) {
+            return this.throwsForbidden("Invalid username");
+        }
+        if (storageId == null || storageId.isEmpty()) {
+            return this.throwsForbidden("Invalid storageId");
+        }
+
+        // Get realm from session, avoiding cross realm logic
+        final RealmModel realm = this.session.getContext().getRealm();
+        final UserModel user = this.session.users().getUserByUsername(realm, username);
+
+        if (user == null) {
+            return this.throwsForbidden(
+                    String.format("User %s not found in the realm %s", username, realm.getName()));
+        }
+
+        this.deleteWebAuthnCredential(user, storageId);
+        return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    /**
+     * Delete all WebAuthn credentials for a user
+     *
+     * @param username the username whose credentials will be deleted
+     * @return 204 No Content if successful else 403 Forbidden
+     */
+    @DELETE
+    @Path("credentials")
+    public Response deleteAllCredentials(@QueryParam("username") String username) {
+        this.verifyAuthClient(); // always first line
+
+        if (username == null || username.isEmpty()) {
+            return this.throwsForbidden("Invalid username");
+        }
+
+        // Get realm from session, avoiding cross realm logic
+        final RealmModel realm = this.session.getContext().getRealm();
+        final UserModel user = this.session.users().getUserByUsername(realm, username);
+
+        if (user == null) {
+            return this.throwsForbidden(
+                    String.format("User %s not found in the realm %s", username, realm.getName()));
+        }
+
+        this.deleteWebAuthnCredentials(user);
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
 }
