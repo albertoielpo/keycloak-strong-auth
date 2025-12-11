@@ -21,6 +21,7 @@ services:
             KC_DB_SCHEMA: keycloak
             KC_DB_URL_HOST: postgres
             KC_DB_URL_DATABASE: postgres
+            PASSKEY_ALLOWED_CLIENTS: sa-client
         ports:
             - "8080:8080"
         volumes:

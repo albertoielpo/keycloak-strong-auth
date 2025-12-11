@@ -108,8 +108,8 @@ public abstract class PasskeyAbstractProvider {
 
     /**
      * Validate that the authenticated client is authorized to access the API.
-     * If PASSKEY_ALLOWED_CLIENTS environment variable is not set, all clients are
-     * allowed.
+     * If PASSKEY_ALLOWED_CLIENTS environment variable is not set then no clients
+     * are allowed
      *
      * @param auth the authenticated session
      * @throws ForbiddenException if client is not in the allowed list
@@ -117,7 +117,8 @@ public abstract class PasskeyAbstractProvider {
     private void assertClientAuthorization(AuthResult auth) {
         String pac = System.getenv(PasskeyConsts.PASSKEY_ALLOWED_CLIENTS);
         if (pac == null || pac.isEmpty()) {
-            return; // No restrictions configured - all clients allowed
+            logger.warn("PASSKEY_ALLOWED_CLIENTS not set. No clients allowed");
+            throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
         }
         String[] allowedClients = pac.split(",");
         String clientId = auth.getToken().getIssuedFor();
