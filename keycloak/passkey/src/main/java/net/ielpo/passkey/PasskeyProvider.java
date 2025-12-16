@@ -35,6 +35,7 @@ import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.verifier.attestation.trustworthiness.certpath.NullCertPathTrustworthinessVerifier;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -109,11 +110,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
             return this.throwsForbidden("Passkeys policy not enabled");
         }
 
-        final UserModel user = this.session.users().getUserByUsername(realm, username);
-
-        if (user == null) {
-            return this.throwsForbidden(String.format("user %s not found in the realm %s", username, realm.getName()));
-        }
+        final UserModel user = this.getSessionUserByUsername(realm, username);
 
         // Generate a new challenge
         String challengeBase64 = this.generateChallenge();
@@ -206,12 +203,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
 
         // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
-        final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
-
-        if (user == null) {
-            return this.throwsForbidden(
-                    String.format("User %s not found in the realm %s", dto.getUsername(), realm.getName()));
-        }
+        final UserModel user = this.getSessionUserByUsername(realm, dto.getUsername());
 
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
         if (policy == null || !policy.isPasskeysEnabled()) {
@@ -265,12 +257,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         }
         // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
-        final UserModel user = this.session.users().getUserByUsername(realm, dto.getUsername());
-
-        if (user == null) {
-            return this.throwsForbidden(
-                    String.format("User %s not found in the realm %s", dto.getUsername(), realm.getName()));
-        }
+        final UserModel user = this.getSessionUserByUsername(realm, dto.getUsername());
 
         WebAuthnPolicy policy = realm.getWebAuthnPolicyPasswordless();
         if (policy == null || !policy.isPasskeysEnabled()) {
@@ -283,6 +270,9 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
         String decodedClientDataJSON = new String(decodedBytes, "UTF-8");
 
         JsonNode clientData = PasskeyConsts.objectMapper.readTree(decodedClientDataJSON);
+        if (clientData.get("origin") == null || clientData.get("challenge") == null) {
+            throw new BadRequestException("Client data is malformed");
+        }
 
         Origin origin = new Origin(clientData.get("origin").asText());
         Set<Origin> originSet = new HashSet<>();
@@ -379,12 +369,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
 
         // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
-        final UserModel user = this.session.users().getUserByUsername(realm, username);
-
-        if (user == null) {
-            return this.throwsForbidden(
-                    String.format("User %s not found in the realm %s", username, realm.getName()));
-        }
+        final UserModel user = this.getSessionUserByUsername(realm, username);
 
         this.deleteWebAuthnCredential(user, storageId);
         return Response.status(Response.Status.NO_CONTENT).build();
@@ -407,12 +392,7 @@ public class PasskeyProvider extends PasskeyAbstractProvider implements RealmRes
 
         // Get realm from session, avoiding cross realm logic
         final RealmModel realm = this.session.getContext().getRealm();
-        final UserModel user = this.session.users().getUserByUsername(realm, username);
-
-        if (user == null) {
-            return this.throwsForbidden(
-                    String.format("User %s not found in the realm %s", username, realm.getName()));
-        }
+        final UserModel user = this.getSessionUserByUsername(realm, username);
 
         this.deleteWebAuthnCredentials(user);
         return Response.status(Response.Status.NO_CONTENT).build();

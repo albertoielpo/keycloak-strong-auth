@@ -49,6 +49,7 @@ import com.webauthn4j.verifier.attestation.statement.u2f.FIDOU2FAttestationState
 import com.webauthn4j.verifier.attestation.trustworthiness.certpath.CertPathTrustworthinessVerifier;
 import com.webauthn4j.verifier.attestation.trustworthiness.self.DefaultSelfAttestationTrustworthinessVerifier;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -61,8 +62,9 @@ import jakarta.ws.rs.core.Response;
  */
 public abstract class PasskeyAbstractProvider {
 
-    private static final String BEARER_AUTH_SCHEME = "Bearer";
-    private static final String CLIENT_FORBIDDEN_MESSAGE = "Client is not authorized to access this resource";
+    private static final String BEARER_AUTH_SCHEME = "Invalid Bearer";
+    private static final String USER_NOT_SERVICE_ACCOUNT = "User is not a service account";
+    private static final String USER_NOT_ALLOWED = "User not allowed";
 
     protected final Logger logger;
     protected final KeycloakSession session;
@@ -77,19 +79,13 @@ public abstract class PasskeyAbstractProvider {
     /**
      * Verify the caller client, token must be valid.
      * Call this function in every public provider method as first line.
-     *
-     * Validates:
-     * 1. Bearer token authentication
-     * 2. Client authorization against PASSKEY_ALLOWED_CLIENTS environment variable
+     * Validates via Bearer token authentication
      *
      * @return AuthResult containing the authenticated session
      * @throws NotAuthorizedException if token is invalid or missing
-     * @throws ForbiddenException     if client is not in the allowed list
      */
     protected AuthResult verifyAuthClient() {
-        AuthResult auth = this.authenticateBearerToken();
-        this.assertClientAuthorization(auth);
-        return auth;
+        return this.authenticateBearerToken();
     }
 
     /**
@@ -101,40 +97,44 @@ public abstract class PasskeyAbstractProvider {
     private AuthResult authenticateBearerToken() {
         AuthResult auth = new AppAuthManager.BearerTokenAuthenticator(this.session).authenticate();
         if (auth == null) {
+            logger.error(BEARER_AUTH_SCHEME);
             throw new NotAuthorizedException(BEARER_AUTH_SCHEME);
+        } else if (auth.getUser().getServiceAccountClientLink() == null) {
+            logger.error(USER_NOT_SERVICE_ACCOUNT);
+            throw new NotAuthorizedException(USER_NOT_SERVICE_ACCOUNT);
+        } else if (auth.getToken().getRealmAccess() == null ||
+                !auth.getToken().getRealmAccess().isUserInRole(PasskeyConsts.CLIENT_REALM_SERVICE_ACCOUNT_ROLE)) {
+            logger.error(USER_NOT_ALLOWED);
+            throw new NotAuthorizedException(USER_NOT_ALLOWED);
         }
+
         return auth;
     }
 
     /**
-     * Validate that the authenticated client is authorized to access the API.
-     * If PASSKEY_ALLOWED_CLIENTS environment variable is not set then no clients
-     * are allowed
+     * Retrieves a user from the Keycloak session by username within the specified
+     * realm.
+     * This method validates that the user exists and is not a service account.
      *
-     * @param auth the authenticated session
-     * @throws ForbiddenException if client is not in the allowed list
+     * @param realm    the Keycloak realm where the user is registered
+     * @param username the username of the user to retrieve
+     * @return the UserModel representing the requested user
+     * @throws ForbiddenException if the user is not found in the realm or if the
+     *                            user is a service account
      */
-    private void assertClientAuthorization(AuthResult auth) {
-        String pac = System.getenv(PasskeyConsts.PASSKEY_ALLOWED_CLIENTS);
-        if (pac == null || pac.isEmpty()) {
-            logger.warn("PASSKEY_ALLOWED_CLIENTS not set. No clients allowed");
-            throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
-        }
-        String[] allowedClients = pac.split(",");
-        String clientId = auth.getToken().getIssuedFor();
-        if (clientId == null) {
-            logger.warn("Client id is null");
-            throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
+    protected UserModel getSessionUserByUsername(RealmModel realm, String username) {
+        final UserModel user = this.session.users().getUserByUsername(realm, username);
+        if (user == null) {
+            String errMsg = String.format("user %s not found in the realm %s", username, realm.getName());
+            logger.error(errMsg);
+            throw new ForbiddenException(errMsg);
         }
 
-        for (String allowed : allowedClients) {
-            if (allowed.trim().equals(clientId)) {
-                return; // found
-            }
+        if (user.getServiceAccountClientLink() != null) {
+            logger.error("User cannot be a service account");
+            throw new ForbiddenException(USER_NOT_ALLOWED);
         }
-
-        logger.warn("Client '{}' attempted access but is not in allowed list", clientId);
-        throw new ForbiddenException(CLIENT_FORBIDDEN_MESSAGE);
+        return user;
     }
 
     /**
@@ -293,6 +293,9 @@ public abstract class PasskeyAbstractProvider {
 
         // Deserialize the decoded JSON string into a JsonNode
         JsonNode clientData = PasskeyConsts.objectMapper.readTree(decodedClientDataJSON);
+        if (clientData.get("origin") == null) {
+            throw new BadRequestException("Client data is malformed");
+        }
 
         Origin origin = new Origin(clientData.get("origin").asText());
         Set<Origin> originSet = new HashSet<>();

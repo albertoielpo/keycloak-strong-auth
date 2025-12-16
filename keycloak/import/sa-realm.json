@@ -78,6 +78,15 @@
         "attributes": {}
       },
       {
+        "id": "6c280d5c-bf1f-47e1-800e-18ade46e20c2",
+        "name": "manage-passkey",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "05d34163-d404-47b6-a5c1-f7138418adb4",
+        "attributes": {}
+      },
+      {
         "id": "ae0aa396-72b8-48c1-9877-989083a8f509",
         "name": "offline_access",
         "description": "${role_offline-access}",
@@ -459,6 +468,25 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessExtraOrigins": [],
   "webAuthnPolicyPasswordlessPasskeysEnabled": true,
+  "users": [
+    {
+      "id": "af56ef84-7422-498a-b03c-fd4a68a84c3a",
+      "username": "service-account-sa-client",
+      "emailVerified": false,
+      "enabled": true,
+      "createdTimestamp": 1760363479017,
+      "totp": false,
+      "serviceAccountClientId": "sa-client",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-sa",
+        "manage-passkey"
+      ],
+      "notBefore": 0,
+      "groups": []
+    }
+  ],
   "scopeMappings": [
     {
       "clientScope": "offline_access",
@@ -760,8 +788,8 @@
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
-        "web-origins",
         "service_account",
+        "web-origins",
         "acr",
         "profile",
         "roles",
@@ -1579,13 +1607,13 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-usermodel-attribute-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-address-mapper",
-            "saml-role-list-mapper",
             "saml-user-property-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
             "oidc-full-name-mapper",
             "oidc-usermodel-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-address-mapper",
             "saml-user-attribute-mapper"
           ]
         }
@@ -1606,13 +1634,13 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-address-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-attribute-mapper",
             "saml-user-property-mapper",
-            "oidc-full-name-mapper",
             "saml-role-list-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "oidc-address-mapper",
+            "oidc-full-name-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-user-attribute-mapper",
             "oidc-usermodel-property-mapper"
           ]
         }
@@ -1684,15 +1712,6 @@
         "providerId": "rsa-enc-generated",
         "subComponents": {},
         "config": {
-          "privateKey": [
-            "MIIEowIBAAKCAQEAqekm31sK0GsgaMp2TPS8MAMqy3Ui/2BEu1gn0OcP4ULkbr2m9mX4lcvkuT0KVJ5gFpPQMvtnGfqbyTqYOqnJJOGmYs0IDjiM2ew/WTUvSxgtXklVlH3xZoblPSqu8UeXWxweSAkuN+LPkebeMsjAsRBYy1w2akhfZl4jVMOEOJXv7t5KMhvMaS2lDqXjSNQMzxOP7uGOCvPeOCI72cepiwuOQGERU14dH2XExFamcPNaoKq0TVLIzQUHCBrYpRQdpKRExYVVzk4RR65tvk326G2TEtboFJ6Fb27huioUiXQMTevlqHN1DLkqBD+14vPwzhuKizjfZtFW6PD2geF9rwIDAQABAoIBAADyS15ogJz7pj6UhiMgClYdq1LbgW1C0w8wdWhsQA2jfznr+cjf3oOIBhYNtfQVxEarGXoenA4sPCoZrc287crElYdkhKfG5/fMYvuKPkpQWRl6D6OBIN0NYbKSVfnHWmcCxEdw7vvir4P06r4f208iApNh/InQ/568rhi0BdpjMJVGY0t5AcWXrWKfpH+KqMxsPDBV5adLB5hTR8bLkpgXsEpE247Im1y8BSHHYNPF9uplzNC5LnUECrCiep0A1GLK3mVMwHETmpevj+EJ2887QIiqoXT775jROwZEcM0y83W+NYKIK1Yq2hdF8a5w2AT3uIdz/Uaivmttlcmqs90CgYEA4vo6TsJAo3QLXvPfTMkQAiOmbJRODkp3nREg3R6bfsTk6a7hc8M9lmXFoEdmgr20DyPJUE3zW40et2+RHFxxuR5BeIMGHgDaxuGT87UClGlarArasVYbrsRMugIyE89fLueQCAwVtn+XxyPzhu6zLULqmINF+FgkgzrySbSRRn0CgYEAv6LuATLaEACowgzbbpZv0wih8OeHimOTm+UKajHcZHmf6jpwttETIJSIdO5KRjBStRhaHc1xUR2Hxur1u79v0Z44dxxkMchUcWuq/vW+nyUeRN3Uu0e73tDjUNLtpIFBmOIb+5Yi14h54HkwloE0L/JUrOGZ31iGog7s5MLUEJsCgYEApogZR7fWXRbDUQN1Do1mpWsqq/eT3YBdimwKxLG0PKqRmbKpz5msEjDRcutwFvTAq2sCRV0r9DvyEXxV540cE0pTluvrDRBrdAgF2YUxQ1qZIClGk14uKWf1M3Rw8X/wwiU70+up8qBi58VE4/c2lzrFjOij6bYh8/bH1bQZ8rECgYAhIgdqd6NSLvr+igCKb0IoR47QOwepOqwzwPb7A2HqkUi/05jXUvCuql+pb+WxmvtBylMSYgncj3GBR/BypJets2Bp36PHI67N6WKoME7j7yP7nisAsldeH9mdiMqDrcFssHNMHVoqz7Lax7lJ3E7sl0ZimaLkBcdJT7FPoAvQTwKBgGY6wKw9dzGlpOz3+p2QEu4oeehfpsEfFEnuCw2TNLRpNvNnsZm0rEodu3A29XLjkEOg8nQmNxqTguj2UdpnseZR+ffeS2JLBN+PQYd7WbHUbEPyk2mNg+KKGx+ChzENBIOkM+odv88TIF6n+7XBtp+g++R7sfNnMbEZQmRj9ByR"
-          ],
-          "keyUse": [
-            "ENC"
-          ],
-          "certificate": [
-            "MIICkzCCAXsCBgGZzH3SUTANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJzYTAeFw0yNTEwMTAwNDU4NDFaFw0zNTEwMTAwNTAwMjFaMA0xCzAJBgNVBAMMAnNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqekm31sK0GsgaMp2TPS8MAMqy3Ui/2BEu1gn0OcP4ULkbr2m9mX4lcvkuT0KVJ5gFpPQMvtnGfqbyTqYOqnJJOGmYs0IDjiM2ew/WTUvSxgtXklVlH3xZoblPSqu8UeXWxweSAkuN+LPkebeMsjAsRBYy1w2akhfZl4jVMOEOJXv7t5KMhvMaS2lDqXjSNQMzxOP7uGOCvPeOCI72cepiwuOQGERU14dH2XExFamcPNaoKq0TVLIzQUHCBrYpRQdpKRExYVVzk4RR65tvk326G2TEtboFJ6Fb27huioUiXQMTevlqHN1DLkqBD+14vPwzhuKizjfZtFW6PD2geF9rwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQBr+hPyHatxDc0CumJf2EtIgr2J8AbT7eLLGTSR1oueAE8x5ze1eDk+JzY3OTMJvLM3Gt4BJPLFxj1LlmBzd8vyhXX1JyeGHoMXr7kBdEX+uXFpK2c3RSe0e9/Op7bttXTY0E94KMPfZAIY/LuTWhHkHyCcW6fCFwffCf7hXpPtkmjPnhBWSCbWU9PUBn7bRmGw9W0VZDzLvE4bX7L9AHr6ivEauelhVoiV+iMpruPefFU9iZUj7KkEUQB23lMPkQ7Yt9bU10HX1Nwax9Tq4w9ufuWMIKEaIPpcRQIqB+TJnFvtZAJD2WIpWvzAnxJdVIj/9ttF2qOrhysMNJOh35hR"
-          ],
           "priority": [
             "100"
           ],
@@ -1707,15 +1726,6 @@
         "providerId": "rsa-generated",
         "subComponents": {},
         "config": {
-          "privateKey": [
-            "MIIEogIBAAKCAQEApNGwjc2m8uetxWKXKGKMW9vF7GeW8xbZkn0Ur3lRlJy5HI3FbTFJGp2y6XBj9AWbkpPYNtbegKp7eoNAHdmXbY/OxPwWcZ63Namm6ELHifW4MdVt2oJKeCPOZ5XBDNwpHUGOgI699YLqeIoJ3XNkMyRaErDj/rxNeqMNFwut2WNZqYTNnwydUHjQqAiY5cp4K5nG8tIWHvPuj9v25EP8OTtDmUPvwvlFEThc8OSYfB83mKGq/VwmwDsvpUHsIHsUlH5gHSbVhBSqwu3X1A3CJJaIM53QiZRjElZKELpBXe7C8JyQm/RDb5T99yNZpYxVzfZF2jDsXcQiKMAuqUIzQQIDAQABAoIBABFgrgCvgpcZFA5sFBOtG08qm4JO1ECuY7OBJmOPcylsAkz3Si32fLaWkrjv8Yv2pOXmGm2Cx2wxvWnoCYQ0L1X9DAAjM6MYaMj6yZcyxkremmR/tDDOHLewz8gGZze5xUh5Q2L82dy3SE08AakEi/ej8S7IEYvn0vP3mc9YmwSA3F9Txythp1wktMqM8kXqSoSKFC+apZMCNn8qGRudEXc4jWwHhl72ZyJakIH3LtblobFDAUCwSgfj3HbeC8vkTeBZ45CrW1w1JSfmGiyJ9dfQBfyQgUerQmmA1A/CpNt00OS6jHhnp7t6BL/Q/7tyrPQpOCwmkwfpbhqAASLAL0kCgYEA579rpYOHACcvVUkZAiOmGlsCDbR6l6+vcjRydp5Gadv1f0YdfmuZE2VnhjFHPK3MFfjJOZaTMQ1YJyy/mbA0i51o/XGxlMVYq9lR+SRuJnAgzCQHatmeVFyIOBXK61kSS+GrvZXtLg34+s8NdvMyuzJYrWiI0nQTZ0eabOeNIpkCgYEAthE7/wdel80otwqt0OIaa+PmjLfq8dSBb1NA2U6L+6LQ/oUtQQtl1x/iwcTKLjgzcT7TrVWE1V4MyZTyrw/bnzFvKoesEKFyh3ZPKbx8+hlNKP5wYvxSNmEadQHjRIwERkhOxsDCz+RfLzCr6U1yiVqfInC2R4d8VWzJzDHjJukCgYBeHT/jNLoDluZDFW+Bjear91+rHytWJLP0hlYh0/82iGx3pordx2agGONk/Og4PUCPf7yAlaTrG8c8CZE6IfQE6wUzQBPlHgv3pkcDDgdptsmq/crBWuVQz09Gr5r73u1uQZSUZqmutV/yw1ltgDCPE1AuBDDkft1OaSbOqW6IqQKBgDTZq+DL8tl95GO95dbMy36mGTaf7MNmPGxkbl6mPlw9Vw2K+yf2dwmLZ/d3eHkSN1yYMDoQqQ6Gzo91fTz0DXyYjPx7hacONoC8Bx7GaEDxN0S/F0CknfjLFzL/6UjsnBEKzFNFgUd3s2mvZzfCE41rkOYeccsxuRXTDoEHujiBAoGAWYml6cuADWB/1f4TyKTlvf76D3lwvjqybfCIm+PCwXx526mSE//QyZzKAyCdvKJjNNxI2zsCLxhRJqjWJbkifs0eSQjl10wzP4aZcVIBCTGQoW7sdsx47xCGgxrStCvjkh1z4xgb7VlzgaCTLTcd0mH5a38QVtkv9uJ9JkhF3Us="
-          ],
-          "keyUse": [
-            "SIG"
-          ],
-          "certificate": [
-            "MIICkzCCAXsCBgGZzH3SDjANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJzYTAeFw0yNTEwMTAwNDU4NDFaFw0zNTEwMTAwNTAwMjFaMA0xCzAJBgNVBAMMAnNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApNGwjc2m8uetxWKXKGKMW9vF7GeW8xbZkn0Ur3lRlJy5HI3FbTFJGp2y6XBj9AWbkpPYNtbegKp7eoNAHdmXbY/OxPwWcZ63Namm6ELHifW4MdVt2oJKeCPOZ5XBDNwpHUGOgI699YLqeIoJ3XNkMyRaErDj/rxNeqMNFwut2WNZqYTNnwydUHjQqAiY5cp4K5nG8tIWHvPuj9v25EP8OTtDmUPvwvlFEThc8OSYfB83mKGq/VwmwDsvpUHsIHsUlH5gHSbVhBSqwu3X1A3CJJaIM53QiZRjElZKELpBXe7C8JyQm/RDb5T99yNZpYxVzfZF2jDsXcQiKMAuqUIzQQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQASUsPbs3SM0NyWLmJNuMs7PtvHyk2XlCxlnW8A5XrTOBZprVxfxfkYaw4FtlYEJt02ymxohSykzhYPJMDsAlSlJqcwBu5Bz3aluFWsw7L99Sh6/+VTVFbRdbAIoHxPMR+RNDcsLAtvZJTlwr9l4OzdYl9UdyGZPKKF6TRkrqZGP5eBv1a5G7ejh1juBAvLLgFg1nsabI2RJGfS5WFudK3oEYryu8nUWlLgfVO910B/qWPB8mp5OmPpB+hmS3rBK3x7MTVhPZGbTalideOU4pRKef7bru5GSJyP6875At6u/ygxEBpRT1Pzc0A4IxPOU3jLQZgDX6elpabB8k7MhVcf"
-          ],
           "priority": [
             "100"
           ]
@@ -1727,12 +1737,6 @@
         "providerId": "hmac-generated",
         "subComponents": {},
         "config": {
-          "kid": [
-            "31e8d630-fb3c-4f6a-ab8a-17689dd8ffba"
-          ],
-          "secret": [
-            "DPK0GH2k0UI6sYC9Vf9sXuU9aRVRKAGjTLxzuuUHVBsHu3am0vJrYF-TXDYQUd2pOFLwtGpkMpJcs44P3jf60VdR1fJv8LmKKUhh0Dv00kCbtVG2rYa7UiHzJ16ujRzW8Rw5Xk1QAasvkfuuwrL8atsWDh7lRcQkSIz6jB_Rbdk"
-          ],
           "priority": [
             "100"
           ],
@@ -1747,12 +1751,6 @@
         "providerId": "aes-generated",
         "subComponents": {},
         "config": {
-          "kid": [
-            "cef4347a-d7b8-4739-846e-bb74d0c03461"
-          ],
-          "secret": [
-            "waLYPYrAK4vuRLJcvJrF2w"
-          ],
           "priority": [
             "100"
           ]
@@ -2596,7 +2594,7 @@
     "cibaInterval": "5",
     "realmReusableOtpCode": "false"
   },
-  "keycloakVersion": "26.4.0",
+  "keycloakVersion": "26.4.7",
   "userManagedAccessAllowed": false,
   "organizationsEnabled": false,
   "verifiableCredentialsEnabled": false,

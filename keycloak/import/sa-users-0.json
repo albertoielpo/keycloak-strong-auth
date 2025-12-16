@@ -26,19 +26,5 @@
     "realmRoles" : [ "default-roles-sa" ],
     "notBefore" : 0,
     "groups" : [ ]
-  }, {
-    "id" : "af56ef84-7422-498a-b03c-fd4a68a84c3a",
-    "username" : "service-account-sa-client",
-    "emailVerified" : false,
-    "enabled" : true,
-    "createdTimestamp" : 1760363479017,
-    "totp" : false,
-    "serviceAccountClientId" : "sa-client",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-sa" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  } ]
+  }]
 }

@@ -12,7 +12,7 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
  * @author Alberto Ielpo
  */
 public class PasskeyConsts {
-    public static final String VERSION = "1.2.1";
+    public static final String VERSION = "1.3.0";
     public static final ObjectMapper objectMapper = new ObjectMapper();
 
     // Provider id aka base route
@@ -31,7 +31,8 @@ public class PasskeyConsts {
     // Default openid token scopes
     public static final String DEFAULT_OPENID_TOKEN_SCOPES = "openid profile email";
 
-    // Env variable name defining the client id allowed. (comma separated)
-    // client-1,client-2
-    public static final String PASSKEY_ALLOWED_CLIENTS = "PASSKEY_ALLOWED_CLIENTS";
+    // Create a realm role named "manage-passkey"
+    // In the client configuration, enable service account roles and assign this
+    // realm role
+    public static final String CLIENT_REALM_SERVICE_ACCOUNT_ROLE = "manage-passkey";
 }

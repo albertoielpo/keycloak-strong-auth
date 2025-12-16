@@ -10,9 +10,15 @@ Build the project using Maven:
 ./mvnw clean install
 ```
 
+Or on Windows:
+
+```cmd
+mvnw.cmd clean install
+```
+
 ## Keycloak Integration
 
-This extension is compatible with Keycloak version 26.0.4 running in Docker.
+This extension is compatible with Keycloak version 26.4 running in Docker.
 
 ### Docker Configuration
 
@@ -25,6 +31,35 @@ image: quay.io/keycloak/keycloak:26.4
 # Volume configuration to load the custom provider
 volumes:
   - ./keycloak/passkey/keycloak-passkey.jar:/opt/keycloak/providers/keycloak-passkey.jar
+```
+
+## Configuration
+
+### Authentication Setup
+
+The API endpoints are protected using role-based access control (RBAC). To configure access:
+
+1. **Create a Realm Role**:
+   - In Keycloak Admin Console, navigate to your realm
+   - Go to **Realm roles** → **Create role**
+   - Create a role named `manage-passkey`
+
+2. **Configure Service Account Client**:
+   - Create or use an existing client for API access
+   - Enable **Service accounts roles** in the client configuration
+   - In the **Service account roles** tab, assign the `manage-passkey` realm role to the client
+
+3. **Obtain Access Token**:
+   - Use the client credentials grant to obtain a Bearer token
+   - Include this token in the `Authorization` header for all API requests
+
+**Example token request**:
+```bash
+curl -X POST http://localhost:8080/realms/{realm}/protocol/openid-connect/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id={your-client-id}" \
+  -d "client_secret={your-client-secret}"
 ```
 
 ## REST API Endpoints
@@ -66,25 +101,45 @@ http://<host>/realms/<realm>/<provider_id>/<path>
 
 ### Example Requests
 
+All API requests require a valid Bearer token from a service account with the `manage-passkey` role.
+
 ```bash
 # Check extension version
-GET http://localhost:8080/realms/:realm/passkey/version
+curl -X GET http://localhost:8080/realms/{realm}/passkey/version \
+  -H "Authorization: Bearer {access_token}"
 
 # Generate registration challenge
-GET http://localhost:8080/realms/:realm/passkey/challenge?username=alberto&type=REGISTER
+curl -X GET "http://localhost:8080/realms/{realm}/passkey/challenge?username=alberto&type=REGISTER" \
+  -H "Authorization: Bearer {access_token}"
 
 # Generate authentication challenge
-GET http://localhost:8080/realms/:realm/passkey/challenge?username=alberto&type=AUTHENTICATE
+curl -X GET "http://localhost:8080/realms/{realm}/passkey/challenge?username=alberto&type=AUTHENTICATE" \
+  -H "Authorization: Bearer {access_token}"
 
 # Authenticate with passkey
-POST http://localhost:8080/realms/:realm/passkey/authenticate
+curl -X POST http://localhost:8080/realms/{realm}/passkey/authenticate \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
 
 # Register a new passkey (returns storageId in response)
-POST http://localhost:8080/realms/:realm/passkey/register
+curl -X POST http://localhost:8080/realms/{realm}/passkey/register \
+  -H "Authorization: Bearer {access_token}" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
 
 # Delete a specific passkey credential
-DELETE http://localhost:8080/realms/:realm/passkey/credentials/{storageId}?username=alberto
+curl -X DELETE "http://localhost:8080/realms/{realm}/passkey/credentials/{storageId}?username=alberto" \
+  -H "Authorization: Bearer {access_token}"
 
 # Delete all passkey credentials for a user
-DELETE http://localhost:8080/realms/:realm/passkey/credentials?username=alberto
+curl -X DELETE "http://localhost:8080/realms/{realm}/passkey/credentials?username=alberto" \
+  -H "Authorization: Bearer {access_token}"
 ```
+
+## Security Considerations
+
+- All API endpoints require Bearer token authentication
+- Only service accounts with the `manage-passkey` realm role can access the API
+- Regular user accounts (non-service accounts) are rejected
+- The target user for passkey operations must not be a service account
